@@ -1,3 +1,5 @@
+const BASE_URL = "https://quiz-backend-kpj7.onrender.com";
+
 const questions = {
   cn: {
     easy: [
@@ -37,6 +39,7 @@ const questions = {
       {q:"What is a collision domain?", options:["Area where IP conflicts occur","Network segment where packets can collide","Group of routers","Subnet of switches"], ans:1}
     ]
   },
+
   python: {
     easy: [
       {q:"Which keyword defines a function in Python?", options:["func","def","function","define"], ans:1},
@@ -75,6 +78,7 @@ const questions = {
       {q:"Which data structure does Python use for sets internally?", options:["List","Linked List","Hash Table","Tree"], ans:2}
     ]
   },
+
   dbms: {
     easy: [
       {q:"What does DBMS stand for?", options:["Data Base Management System","Data Backup Management System","Digital Base Management System","None"], ans:0},
@@ -113,6 +117,7 @@ const questions = {
       {q:"What is the purpose of the EXPLAIN keyword in SQL?", options:["Describes a table","Shows query execution plan","Lists all indexes","None"], ans:1}
     ]
   },
+
   aptitude: {
     easy: [
       {q:"What is 15% of 200?", options:["25","30","35","40"], ans:1},
@@ -389,14 +394,12 @@ function showResults() {
 
   const pct = Math.round((score / total) * 100);
 
-  // Animated ring
   const circumference = 339.3;
   const offset = circumference - (pct / 100) * circumference;
   setTimeout(() => {
     document.getElementById('ring-progress').style.strokeDashoffset = offset;
   }, 200);
 
-  // Count-up score
   let displayed = 0;
   const counter = setInterval(() => {
     displayed++;
@@ -404,46 +407,71 @@ function showResults() {
     if (displayed >= score) clearInterval(counter);
   }, 80);
 
-  // Grade
   const pill = document.getElementById('grade-pill');
+
   if (pct >= 90) {
     document.getElementById('res-emoji').textContent = '🏆';
     pill.textContent = 'Outstanding! Placement Ready!';
-    pill.style.background = 'rgba(251,191,36,0.15)'; pill.style.color = '#fbbf24';
+    pill.style.background = 'rgba(251,191,36,0.15)';
+    pill.style.color = '#fbbf24';
     launchConfetti();
   } else if (pct >= 70) {
     document.getElementById('res-emoji').textContent = '🎉';
     pill.textContent = 'Great Job! Strong Performance!';
-    pill.style.background = 'rgba(52,211,153,0.15)'; pill.style.color = '#34d399';
+    pill.style.background = 'rgba(52,211,153,0.15)';
+    pill.style.color = '#34d399';
     launchConfetti();
   } else if (pct >= 50) {
     document.getElementById('res-emoji').textContent = '👍';
     pill.textContent = 'Good Effort! Keep It Up!';
-    pill.style.background = 'rgba(167,139,250,0.15)'; pill.style.color = '#a78bfa';
+    pill.style.background = 'rgba(167,139,250,0.15)';
+    pill.style.color = '#a78bfa';
   } else {
     document.getElementById('res-emoji').textContent = '💪';
     pill.textContent = 'Keep Practicing! You\'ll Get There!';
-    pill.style.background = 'rgba(248,113,113,0.15)'; pill.style.color = '#f87171';
+    pill.style.background = 'rgba(248,113,113,0.15)';
+    pill.style.color = '#f87171';
   }
 
-  // Review
   const reviewList = document.getElementById('review-list');
   reviewList.innerHTML = '';
+
   userAnswers.forEach((a, i) => {
     const isCorrect = a.chosen === a.correct;
     const isSkipped = a.chosen === -1;
+
     const div = document.createElement('div');
     div.className = `review-card ${isSkipped ? 'rs' : isCorrect ? 'rc' : 'rw'}`;
+
     const icon = isSkipped ? '⏭️' : isCorrect ? '✅' : '❌';
     const tag = isSkipped ? `<span class="tag tag-s">Skipped</span>`
       : isCorrect ? `<span class="tag tag-c">Correct</span>`
       : `<span class="tag tag-w">Wrong</span>`;
+
     div.innerHTML = `
       <div class="rv-q">${icon} Q${i+1}: ${a.qtext} ${tag}</div>
       <div class="rv-ans">
         <span>Your answer: <span style="color:${isSkipped?'#fbbf24':isCorrect?'#34d399':'#f87171'}">${isSkipped?'Skipped':a.options[a.chosen]}</span></span>
         ${!isCorrect&&!isSkipped?`<span>Correct: <span style="color:#34d399">${a.options[a.correct]}</span></span>`:''}
       </div>`;
+
     reviewList.appendChild(div);
   });
+
+  // 👉 BACKEND SAVE (ONLY ADDITION)
+  fetch(`${BASE_URL}/save-result`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      username: "Guest",
+      topic: currentTopic,
+      score: score,
+      total: questions[currentTopic][currentDiff].length
+    })
+  })
+  .then(res => res.json())
+  .then(data => console.log("Saved:", data))
+  .catch(err => console.error("Error saving:", err));
 }
